@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Dashboard!</h1>
+    <p>This page is only accessible after logging in.</p>
+    <p id="welcomeMessage"></p>
+    
+    <button id="logoutBtn">Logout</button>
+
+<script>
+        console.log('Dashboard script loaded');
+        
+        // Show debugging info on the page itself
+        const debugDiv = document.createElement('div');
+        debugDiv.id = 'debug-info';
+        debugDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #f0f0f0; padding: 15px; border: 2px solid red; z-index: 9999; max-width: 400px; font-size: 12px; white-space: pre-wrap;';
+        
+        const token = localStorage.getItem('token');
+        debugDiv.textContent = `DEBUG INFO:\n`;
+        debugDiv.textContent += `Token: ${token ? token.substring(0, 20) + '...' : 'NULL'}\n`;
+        
+        document.body.appendChild(debugDiv);
+        console.log('Token from localStorage:', token);
+
+        if (!token) {
+            debugDiv.textContent += `\n❌ NO TOKEN FOUND\nRedirecting in 5 seconds...`;
+            console.error('No token found - redirecting');
+            setTimeout(() => {
+                window.location.href = 'http://localhost:5000/index.html';
+            }, 5000);
+        } else {
+            debugDiv.textContent += `\n✓ Token found\nAttempting fetch to /dashboard...`;
+            
+            fetch('http://localhost:5000/api/dashboard-data', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => {
+                debugDiv.textContent += `\nResponse status: ${response.status}`;
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                debugDiv.textContent += `\n✓ Success!`;
+                console.log('Protected data:', data);
+            })
+            .catch(error => {
+                debugDiv.textContent += `\n❌ Fetch Error: ${error.message}\nRedirecting in 3 seconds...`;
+                console.error('Error:', error);
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:5000/index.html';
+                }, 3000);
+            });
+        }
+
+        // Retrieve the current user information from localStorage
+        const currentUser = JSON.parse(localStorage.getItem('currentuser'));
+        if (currentUser) {
+            document.getElementById('welcomeMessage').innerText = `Hello, ${currentUser.username}!`;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Clear the token and user info from localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentuser');
+            // Redirect to the login page
+            window.location.href = 'http://localhost:5000/index.html';
+        });
+</script>
+</body>
+</html>
