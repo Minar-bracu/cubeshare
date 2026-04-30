@@ -2,7 +2,7 @@
 // If your backend port changes (e.g., from 6700 to 5000), 
 // you only need to update the port number right here!
 
-const BACKEND_DOMAIN_AND_PORT = "localhost:6700";
+const BACKEND_DOMAIN_AND_PORT = "localhost:10000";
 
 // Used for normal API requests (Login, Register, etc.)
 export const API_BASE_URL = `http://${BACKEND_DOMAIN_AND_PORT}/api`;
