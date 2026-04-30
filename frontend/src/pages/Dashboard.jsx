@@ -35,7 +35,7 @@ export default function Dashboard({triggerspin}) {
               <span className="dash-card-hint" >Swipe to Back face →</span>
             </div>
           </div>
-          <div onClick={()=>triggerspin(700,1,{x:1,y:-1})} className="dash-card" data-accent="cyan">
+          <div onClick={()=>triggerspin(600,1,{x:1,y:-1})} className="dash-card" data-accent="cyan">
             <div className="dash-card-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
             </div>

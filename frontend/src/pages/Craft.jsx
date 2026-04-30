@@ -284,8 +284,20 @@ export default function Craft() {
           transform: `rotateX(${0}deg) rotateY(${cubestate.y}deg)`,
           touchAction: "none",
         }}
-        className="dynamic-cube"
+        className="dynamic-cube retro-gloss-theme"
       >
+        {/* Global SVG Gradient Definition for retro-pixel icons */}
+        <svg width="0" height="0" style={{ position: 'absolute' }}>
+          <defs>
+            <linearGradient id="rainbow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ff0055" />
+              <stop offset="25%" stopColor="#ffaa00" />
+              <stop offset="50%" stopColor="#55ff00" />
+              <stop offset="75%" stopColor="#00ffff" />
+              <stop offset="100%" stopColor="#ff00ff" />
+            </linearGradient>
+          </defs>
+        </svg>
 
         <div
           className="cube-side-face cube-face-front"
