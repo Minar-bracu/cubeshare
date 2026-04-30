@@ -124,7 +124,7 @@ export default function Craft() {
     }else{
     distancetravelled.current = Math.sqrt(
       Math.pow(e.clientX - firstPosition.current.x, 2) +
-        Math.pow(e.clientY - firstPosition.current.y, 2),
+        Math.pow((e.clientY - firstPosition.current.y) * 0.05, 2),
     );}
 
     // Reset speed if minimal movement
@@ -138,10 +138,10 @@ export default function Craft() {
     if (distancetravelledvalue){
       newFlickSpeed=distancetravelledvalue/duration;
     }else{
-    const sensitivity = window.innerWidth < 768 ? 2.5 : 1.0;
+
     newFlickSpeed = Math.min(
-      1000,
-      (distancetravelled.current / duration) * 1000 * sensitivity,
+      700,
+      (distancetravelled.current / duration) * 1000,
     );
     }
 
@@ -241,7 +241,7 @@ export default function Craft() {
     moved.current = false;
 
     // Capture the pointer to handle movement even outside the element
-    e.target.setPointerCapture(e.pointerId);
+    e.currentTarget.setPointerCapture(e.pointerId);
 
     window.addEventListener("pointermove", handlePointerMove);
 
@@ -291,7 +291,7 @@ export default function Craft() {
     <main
     onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
-      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 3}px`, touchAction: "none" }}
+      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 5}px`, touchAction: "none" }}
     >
       <button 
         onClick={toggleFullscreen}
