@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useAuth } from "../context/AuthContext";
 
-export default function Profile({ webrtc }) {
+const Profile = memo(function Profile({ webrtc }) {
   const { user } = useAuth();
   const [joinCode, setJoinCode] = useState("");
   const [copied, setCopied] = useState(false);
@@ -145,4 +145,6 @@ export default function Profile({ webrtc }) {
       </div>
     </div>
   );
-}
+});
+
+export default Profile;

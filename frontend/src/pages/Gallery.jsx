@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 
-export default function Gallery({ fileStore }) {
+const Gallery = memo(function Gallery({ fileStore }) {
   const [previewItem, setPreviewItem] = useState(null);
   const [sortBy, setSortBy] = useState("date");
   const [tab, setTab] = useState("received"); // "received" | "sent"
@@ -131,4 +131,6 @@ export default function Gallery({ fileStore }) {
       </div>
     </div>
   );
-}
+});
+
+export default Gallery;

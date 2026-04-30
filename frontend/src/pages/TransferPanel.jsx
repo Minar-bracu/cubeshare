@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, memo } from "react";
 
-export default function TransferPanel({ webrtc, fileStore, broadcast }) {
+const TransferPanel = memo(function TransferPanel({ webrtc, fileStore, broadcast }) {
   const [mode, setMode] = useState("file"); // "file" | "text"
   const [textInput, setTextInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -238,4 +238,6 @@ export default function TransferPanel({ webrtc, fileStore, broadcast }) {
       </div>
     </div>
   );
-}
+});
+
+export default TransferPanel;

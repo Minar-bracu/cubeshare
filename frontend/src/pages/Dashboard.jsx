@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
+import { memo } from "react";
 
-export default function Dashboard({triggerspin}) {
+const Dashboard = memo(function Dashboard({triggerspin}) {
   const { user, logout } = useAuth();
 
   return (
@@ -57,14 +58,15 @@ export default function Dashboard({triggerspin}) {
 
         <div className="dash-hint-section">
           <div className="dash-hint-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           </div>
           <p className="dash-hint-text">
-            Drag or flick the cube to navigate between faces. Send files, texts,
-            and links to your devices or nearby users — all peer-to-peer, no uploads.
+            CubeShare is peer-to-peer. Keep this tab open while transferring files to ensure maximum speed and privacy.
           </p>
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default Dashboard;

@@ -110,11 +110,10 @@ export default function Craft() {
 
     advanceChar(Math.abs(rotY));
 
-    setCubestate((prev) => ({
-      x: 0, // Lock X rotation to 0 to prevent internal "upside down" state
-      y: (prev.y + rotY) % 360,
-    }));
     rotationRef.current = (rotationRef.current + rotY) % 360;
+    if (ref.current) {
+      ref.current.style.transform = `rotateX(${0}deg) rotateY(${rotationRef.current}deg)`;
+    }
   }
 
   function flickAnimation(e, duration,distancetravelledvalue=null, directionpassed = null) {
@@ -176,27 +175,25 @@ export default function Craft() {
       }
       const step = direction.x * speed.current * 0.005;
       advanceChar(Math.abs(step));
-      setDisplaySpeed(speed.current);
-      setCubestate((prev) => {
-        const next = {
-          x: prev.x,
-          y: prev.y + step,
-        };
-        if (ref.current) {
-          if (snap.current) {
-            const snappedY = Math.round(next.y / 90) * 90;
-            // Smoothly pull the cube toward the snapped angle (0.1 is the snap strength)
-            if (Math.abs(snappedY-next.y)<= 2){
-              next.y = snappedY;
-            }else{
-            next.y += (snappedY - next.y)*0.5;
-          }}
+      
+      // Only update speed state occasionally to save re-renders
+      if (Math.random() > 0.8) setDisplaySpeed(speed.current);
 
-          ref.current.style.transform = `rotateX(${0}deg) rotateY(${next.y}deg)`;
+      // Update rotation Ref and DOM directly
+      let nextY = rotationRef.current + step;
+      if (snap.current) {
+        const snappedY = Math.round(nextY / 90) * 90;
+        if (Math.abs(snappedY - nextY) <= 5) {
+          nextY = snappedY;
+        } else {
+          nextY += (snappedY - nextY) * 0.5;
         }
-        rotationRef.current = next.y;
-        return next;
-      });
+      }
+      
+      rotationRef.current = nextY;
+      if (ref.current) {
+        ref.current.style.transform = `rotateX(${0}deg) rotateY(${nextY}deg)`;
+      }
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
       
       // Calculate snap target to check if we are finished using the ref
@@ -209,6 +206,8 @@ export default function Craft() {
         cancelAnimationFrame(rafId.current);
         rafId.current = null;
         setDisplaySpeed(0);
+        // Final sync with React state only when animation stops
+        setCubestate({ x: 0, y: rotationRef.current });
         return;
       }
       rafId.current = requestAnimationFrame(animate);
