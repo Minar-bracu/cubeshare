@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const { WebSocketServer } = require('ws');
 const { setupSignaling } = require('./signaling');
 const { FRONTEND_URL } = require('./config');
+const { initDb } = require('./models/user');
 
 const userRoutes = require('./routes/userroute');
 const authRoutes = require('./routes/authroute');
@@ -23,7 +24,8 @@ app.use(helmet());
 app.use(cors({ origin: FRONTEND_URL, optionsSuccessStatus: 200 }));
 
 app.use(express.json());
-app.use(express.static('.'));
+// Only serve specific public files if necessary
+// app.use(express.static('public'));
 
 // Rate limiter for auth endpoints
 const authLimiter = rateLimit({
@@ -49,6 +51,9 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 setupSignaling(wss, server);
 
 server.listen(port, '0.0.0.0', () => { // Listen on all network interfaces
+  // Explicitly initialize database after environment is ready
+  initDb();
+
   const externalBaseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
   const externalWsUrl = process.env.RENDER_EXTERNAL_URL ? `wss://${new URL(process.env.RENDER_EXTERNAL_URL).host}/ws` : `ws://localhost:${port}/ws`;
 

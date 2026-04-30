@@ -32,8 +32,6 @@ const initDb = async () => {
   }
 };
 
-initDb();
-
 async function createUser(username, password) {
   if (!process.env.DATABASE_URL) throw new Error("Database not configured");
   try {
@@ -58,6 +56,7 @@ async function getUserByUsername(username) {
 }
 
 module.exports = {
+  initDb,
   createUser,
   getUserByUsername
 };
