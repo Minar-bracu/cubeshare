@@ -231,9 +231,8 @@ export default function Craft() {
       return;
     }
 
-    if (e.pointerType === "mouse") {
-      e.preventDefault();
-    }
+    e.preventDefault(); // Crucial: Prevents default browser touch/drag behavior (like scrolling)
+
     startTime.current = performance.now();
     firstPosition.current = { x: e.clientX, y: e.clientY };
     prevMousePos.current = { x: e.clientX, y: e.clientY };
