@@ -88,24 +88,15 @@ export default function Craft() {
       setDisplaySpeed(0);
     }
 
-    const deltaX = e.clientY - prevMousePos.current.y;
     const deltaY = e.clientX - prevMousePos.current.x;
     prevMousePos.current = { x: e.clientX, y: e.clientY };
 
-    let rotX = deltaX * 0.05;
     let rotY = deltaY * 0.05;
-
-    // Adjust horizontal rotation (Y-axis) based on the current pitch (X-axis)
-    // We normalize the X rotation to 0-360 range
-    let normalizedX = ((cubestate.x % 360) + 360) % 360;
-    if (normalizedX > 90 && normalizedX < 270) {
-      rotY = -rotY;
-    }
 
     advanceChar(Math.abs(rotY));
 
     setCubestate((prev) => ({
-      x: (prev.x + rotX) % 360,
+      x: 0, // Lock X rotation to 0 to prevent internal "upside down" state
       y: (prev.y + rotY) % 360,
     }));
   }
@@ -124,7 +115,7 @@ export default function Craft() {
 
     // Reset speed if minimal movement
 
-    if (distancetravelled.current < 100 || duration > 150) {
+    if (distancetravelled.current < 10 || duration > 300) {
       accumulatedSpeed.current = 0;
       speed.current = 0;
       return;
