@@ -8,7 +8,7 @@ import Gallery from "./Gallery";
 import Profile from "./Profile";
 import LockedOverlay from "../components/LockedOverlay";
 import useWebRTC from "../hooks/useWebRTC";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import useFileStore from "../hooks/useFileStore";
 import useBroadcastChannel from "../hooks/useBroadcastChannel";
 
@@ -19,6 +19,7 @@ export default function Craft() {
   const [letterFontSize, setLetterFontSize] = useState(150);
   const [displaySpeed, setDisplaySpeed] = useState(0);
   const ref = useRef(null);
+  const rotationRef = useRef(0);
   const isDragging = useRef(false);
   const startTime = useRef(0);
   const distancetravelled = useRef(0);
@@ -113,49 +114,53 @@ export default function Craft() {
       x: 0, // Lock X rotation to 0 to prevent internal "upside down" state
       y: (prev.y + rotY) % 360,
     }));
+    rotationRef.current = (rotationRef.current + rotY) % 360;
   }
 
   function flickAnimation(e, duration,distancetravelledvalue=null, directionpassed = null) {
     if (duration <= 0) {
       return;
     }
-    if(distancetravelledvalue){
+    const finalX = e.clientX || prevMousePos.current.x;
+    const finalY = e.clientY || prevMousePos.current.y;
+
+    if (distancetravelledvalue) {
       distancetravelled.current = distancetravelledvalue;
-    }else{
-    distancetravelled.current = Math.sqrt(
-      Math.pow(e.clientX - firstPosition.current.x, 2) +
-        Math.pow((e.clientY - firstPosition.current.y) * 0.05, 2),
-    );}
+    } else {
+      distancetravelled.current = Math.sqrt(
+        Math.pow(finalX - firstPosition.current.x, 2) +
+          Math.pow((finalY - firstPosition.current.y) * 0.05, 2),
+      );
+    }
 
     // Reset speed if minimal movement
-
     if (distancetravelled.current < 10 || duration > 300) {
       accumulatedSpeed.current = 0;
       speed.current = 0;
       return;
     }
-    var newFlickSpeed=null;
-    if (distancetravelledvalue){
-      newFlickSpeed=distancetravelledvalue/duration;
-    }else{
-
-    newFlickSpeed = Math.min(
-      700,
-      (distancetravelled.current / duration) * 1000,
-    );
+    var newFlickSpeed = null;
+    if (distancetravelledvalue) {
+      newFlickSpeed = distancetravelledvalue / duration;
+    } else {
+      newFlickSpeed = Math.min(
+        700,
+        (distancetravelled.current / duration) * 1000,
+      );
     }
 
     // Stack the new speed with accumulated speed
     accumulatedSpeed.current += newFlickSpeed;
     speed.current = accumulatedSpeed.current;
-    let direction={};
-    if (directionpassed){ 
-      direction=directionpassed;
-    }else{
-    direction = {
-      x: e.clientX - firstPosition.current.x > 0 ? 1 : -1,
-      y: e.clientY - firstPosition.current.y > 0 ? 1 : -1,
-    };}
+    let direction = {};
+    if (directionpassed) {
+      direction = directionpassed;
+    } else {
+      direction = {
+        x: finalX - firstPosition.current.x > 0 ? 1 : -1,
+        y: finalY - firstPosition.current.y > 0 ? 1 : -1,
+      };
+    }
 
     // Reset snap state at the start of every new flick
     snap.current = false;
@@ -189,11 +194,16 @@ export default function Craft() {
 
           ref.current.style.transform = `rotateX(${0}deg) rotateY(${next.y}deg)`;
         }
-
+        rotationRef.current = next.y;
         return next;
       });
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
-      if (speed.current <= 300) {
+      
+      // Calculate snap target to check if we are finished using the ref
+      const snappedY = Math.round(rotationRef.current / 90) * 90;
+      const snapFinished = snap.current && Math.abs(snappedY - rotationRef.current) < 0.1;
+
+      if (speed.current <= 300 && (!snap.current || snapFinished)) {
         snap.current = false;
         accumulatedSpeed.current = 0;
         cancelAnimationFrame(rafId.current);
@@ -222,12 +232,8 @@ export default function Craft() {
   }
 
   function handlePointerDown(e) {
-    // Don't capture pointer events if clicking on an input element
-    if (
-      e.target.tagName === "INPUT" ||
-      e.target.tagName === "TEXTAREA" ||
-      e.target.tagName === "BUTTON"
-    ) {
+    // Don't capture pointer events if clicking on interactive elements
+    if (e.target.closest("button, input, textarea, a, .dash-card, [role='button']")) {
       return;
     }
 
@@ -299,6 +305,99 @@ export default function Craft() {
       >
         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
       </button>
+
+      {/* Navigation Controls */}
+      <div className="nav-controls" style={{
+        position: 'absolute',
+        bottom: '2.5rem',
+        left: 0,
+        right: 0,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 2.5rem',
+        pointerEvents: 'none',
+        zIndex: 1000
+      }}>
+        <button 
+          onClick={() => programiticallySpin(700, 1, { x: 1, y: -1 })}
+          className="cs-btn cs-btn-ghost nav-btn"
+          style={{ 
+            pointerEvents: 'auto', 
+            width: '56px', 
+            height: '56px', 
+            borderRadius: '50%', 
+            background: 'rgba(255,255,255,0.08)', 
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}
+        >
+          <ChevronLeft size={32} />
+        </button>
+
+        <button 
+          onClick={() => {
+            // Stop any current spinning immediately
+            if (rafId.current) {
+              cancelAnimationFrame(rafId.current);
+              rafId.current = null;
+            }
+            speed.current = 0;
+            accumulatedSpeed.current = 0;
+            setDisplaySpeed(0);
+
+            // Calculate the nearest multiple of 360 to return to Dashboard
+            const currentY = rotationRef.current;
+            const targetY = Math.round(currentY / 360) * 360;
+            
+            // Trigger a controlled pull to that target
+            snap.current = true;
+            speed.current = 400; 
+            programiticallySpin(10, 1, { x: targetY > currentY ? 1 : -1, y: 1 });
+          }}
+          className="cs-btn cs-btn-ghost nav-btn"
+          style={{ 
+            pointerEvents: 'auto', 
+            width: '72px', 
+            height: '72px', 
+            borderRadius: '50%', 
+            background: 'rgba(255,255,255,0.15)', 
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            boxShadow: '0 0 20px rgba(255,255,255,0.05)'
+          }}
+        >
+          <LayoutDashboard size={36} />
+        </button>
+
+        <button 
+          onClick={() => programiticallySpin(700, 1, { x: -1, y: 1 })}
+          className="cs-btn cs-btn-ghost nav-btn"
+          style={{ 
+            pointerEvents: 'auto', 
+            width: '56px', 
+            height: '56px', 
+            borderRadius: '50%', 
+            background: 'rgba(255,255,255,0.08)', 
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white'
+          }}
+        >
+          <ChevronRight size={32} />
+        </button>
+      </div>
 
       <div
         ref={ref}
