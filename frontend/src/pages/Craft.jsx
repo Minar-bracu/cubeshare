@@ -13,7 +13,7 @@ import useBroadcastChannel from "../hooks/useBroadcastChannel";
 
 export default function Craft() {
   const [cubestate, setCubestate] = useState({ x: 0, y: 0 });
-  const [messageText] = useState("CCCRRREEEAAATTTEEEEDDD BBBBYYY   SSSAAAAMMM");
+  const [messageText] = useState("   C C R R E E A A T T E E D D   B B B Y Y Y   M M M I I I N N N A A A R R R   ");
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
   const [letterFontSize, setLetterFontSize] = useState(150);
   const [displaySpeed, setDisplaySpeed] = useState(0);
