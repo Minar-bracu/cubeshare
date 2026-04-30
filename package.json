@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "lucide-react": "^1.14.0",
-    "peerjs": "^1.5.5"
+    "peerjs": "^1.5.5",
+    "pg": "^8.20.0"
   }
 }
