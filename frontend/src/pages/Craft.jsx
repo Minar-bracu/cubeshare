@@ -242,28 +242,28 @@ export default function Craft() {
     // Capture the pointer to handle movement even outside the element
     e.currentTarget.setPointerCapture(e.pointerId);
 
+    const cleanup = (e) => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", cleanup);
+      window.removeEventListener("pointercancel", cleanup);
+      isDragging.current = false;
+
+      const endTime = performance.now();
+      if (moved.current === false && rafId.current !== null) {
+        speed.current = 0;
+        accumulatedSpeed.current = 0;
+        setDisplaySpeed(0);
+        cancelAnimationFrame(rafId.current);
+        rafId.current = null;
+        return;
+      }
+      moved.current = false;
+      flickAnimation(e, endTime - startTime.current);
+    };
+
     window.addEventListener("pointermove", handlePointerMove);
-
-    window.addEventListener(
-      "pointerup",
-      (e) => {
-        window.removeEventListener("pointermove", handlePointerMove);
-        isDragging.current = false;
-
-        const endTime = performance.now();
-        if (moved.current === false && rafId.current !== null) {
-          speed.current = 0;
-          accumulatedSpeed.current = 0;
-          setDisplaySpeed(0);
-          cancelAnimationFrame(rafId.current);
-          rafId.current = null;
-          return;
-        }
-        moved.current = false;
-        flickAnimation(e, endTime - startTime.current);
-      },
-      { once: true },
-    );
+    window.addEventListener("pointerup", cleanup, { once: true });
+    window.addEventListener("pointercancel", cleanup, { once: true });
   }
   
   const toggleFullscreen = () => {
@@ -340,6 +340,7 @@ export default function Craft() {
             overflow: "auto",
             padding: "2rem",
             boxSizing: "border-box",
+            touchAction: "none",
           }}
         >
           
@@ -348,6 +349,7 @@ export default function Craft() {
               width: "100%",
               height: "100%",
               transform: "scale(var(--cube-scale, 1))",
+              touchAction: "none",
             }}
           >
 
@@ -365,6 +367,7 @@ export default function Craft() {
             alignItems: "center",
             justifyContent: "center",
             backfaceVisibility: "hidden",
+            touchAction: "none",
           }}
         >
           {isAuthenticated ? <TransferPanel webrtc={webrtc} fileStore={fileStore} broadcast={broadcast} /> : <Login />}
@@ -382,6 +385,7 @@ export default function Craft() {
             backfaceVisibility: "hidden",
             left: "50%",
             marginLeft: `calc(${cubeDepth} * -1)`,
+            touchAction: "none",
           }}
         >
           {isAuthenticated ? <Gallery fileStore={fileStore} /> : <Login />}
@@ -399,6 +403,7 @@ export default function Craft() {
             backfaceVisibility: "hidden",
             left: "50%",
             marginLeft: `calc(${cubeDepth} * -1)`,
+            touchAction: "none",
           }}
         >
           {isAuthenticated ? <Profile webrtc={webrtc} /> : <Login />}
@@ -416,6 +421,7 @@ export default function Craft() {
             backfaceVisibility: "hidden",
             top: "50%",
             marginTop: `calc(${cubeDepth} * -1)`,
+            touchAction: "none",
           }}
         >
           <span
@@ -437,6 +443,7 @@ export default function Craft() {
             backfaceVisibility: "hidden",
             top: "50%",
             marginTop: `calc(${cubeDepth} * -1)`,
+            touchAction: "none",
           }}
         >
           <span
