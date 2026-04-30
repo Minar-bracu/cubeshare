@@ -49,7 +49,10 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 setupSignaling(wss, server);
 
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-  console.log(`WebSocket signaling available at ws://localhost:${port}/ws`);
+server.listen(port, '0.0.0.0', () => { // Listen on all network interfaces
+  const externalBaseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`;
+  const externalWsUrl = process.env.RENDER_EXTERNAL_URL ? `wss://${new URL(process.env.RENDER_EXTERNAL_URL).host}/ws` : `ws://localhost:${port}/ws`;
+
+  console.log(`Server is running on ${externalBaseUrl}`);
+  console.log(`WebSocket signaling available at ${externalWsUrl}`);
 });
