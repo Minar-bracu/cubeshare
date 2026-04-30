@@ -3,7 +3,8 @@
 // you only need to update the URL right here!
 
 // Ensure this matches the URL in your browser address bar exactly
-const FRONTEND_URL = process.env.FRONTEND_ORIGIN || "https://cubeshare.pages.dev";
+const origin = process.env.FRONTEND_ORIGIN || "https://cubeshare.pages.dev";
+const FRONTEND_URL = origin.replace(/\/$/, "");
 
 module.exports = {
   FRONTEND_URL

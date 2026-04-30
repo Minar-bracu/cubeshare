@@ -20,8 +20,7 @@ const port = process.env.PORT || 6700;
 app.use(helmet());
 
 // CORS - tighten in production using FRONTEND_ORIGIN env
-const allowedOrigin = process.env.FRONTEND_ORIGIN || FRONTEND_URL;
-app.use(cors({ origin: allowedOrigin, optionsSuccessStatus: 200 }));
+app.use(cors({ origin: FRONTEND_URL, optionsSuccessStatus: 200 }));
 
 app.use(express.json());
 app.use(express.static('.'));
