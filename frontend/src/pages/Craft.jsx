@@ -8,6 +8,7 @@ import Gallery from "./Gallery";
 import Profile from "./Profile";
 import LockedOverlay from "../components/LockedOverlay";
 import useWebRTC from "../hooks/useWebRTC";
+import { Maximize, Minimize } from "lucide-react";
 import useFileStore from "../hooks/useFileStore";
 import useBroadcastChannel from "../hooks/useBroadcastChannel";
 
@@ -30,6 +31,7 @@ export default function Craft() {
   const lastCharAt = useRef(0);
   const prevMousePos = useRef({ x: 0, y: 0 });
   const snap = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Auth & P2P hooks (cube physics above is untouched)
   const { isAuthenticated, token, user } = useAuth();
@@ -250,14 +252,39 @@ export default function Craft() {
     );
   }
   
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Listen for escape key or browser-level fullscreen changes
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
 
   return (
     
     <main
     onPointerDown={handlePointerDown}
-      className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden"
+      className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
       style={{ perspective: "2900px" }}
     >
+      <button 
+        onClick={toggleFullscreen}
+        className="cs-btn cs-btn-ghost fullscreen-btn"
+        style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 1000, padding: '0.5rem' }}
+      >
+        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+      </button>
 
       <div
         ref={ref}
