@@ -1,7 +1,9 @@
 // Global Configuration File
 
 // Use an environment variable for production (e.g., VITE_BACKEND_HOST="your-app.onrender.com")
-const BACKEND_DOMAIN_AND_PORT = import.meta.env.VITE_BACKEND_HOST || "localhost:10000";
+let host = import.meta.env.VITE_BACKEND_HOST || "localhost:10000";
+// Clean the host: remove http/https and trailing slashes
+const BACKEND_DOMAIN_AND_PORT = host.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 const isHttps = window.location.protocol === "https:";
 const apiProtocol = isHttps ? "https" : "http";
