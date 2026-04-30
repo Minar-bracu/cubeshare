@@ -263,13 +263,14 @@ export default function Craft() {
   return (
     
     <main
+    onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden"
       style={{ perspective: "2900px" }}
     >
 
       <div
         ref={ref}
-        onPointerDown={handlePointerDown}
+        
         style={{
           width: cubeWidth,
           height: cubeHeight,
