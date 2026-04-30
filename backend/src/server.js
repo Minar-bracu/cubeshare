@@ -15,7 +15,7 @@ const { initDb } = require('./models/user');
 const userRoutes = require('./routes/userroute');
 const authRoutes = require('./routes/authroute');
 
-const port = process.env.PORT || 6700;
+const port = process.env.PORT || 10000;
 
 // Security headers
 app.use(helmet());

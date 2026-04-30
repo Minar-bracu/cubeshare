@@ -32,6 +32,18 @@ export default function Craft() {
   const prevMousePos = useRef({ x: 0, y: 0 });
   const snap = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Auth & P2P hooks (cube physics above is untouched)
   const { isAuthenticated, token, user } = useAuth();
@@ -128,7 +140,7 @@ export default function Craft() {
     }else{
 
     newFlickSpeed = Math.min(
-      600,
+      700,
       (distancetravelled.current / duration) * 1000,
     );
     }
@@ -137,7 +149,7 @@ export default function Craft() {
     accumulatedSpeed.current += newFlickSpeed;
     speed.current = accumulatedSpeed.current;
     let direction={};
-    if (directionpassed){
+    if (directionpassed){ 
       direction=directionpassed;
     }else{
     direction = {
@@ -153,7 +165,7 @@ export default function Craft() {
     }
     const deceleration = 0.01;
     const animate = () => {
-      if (speed.current <= 500 && !snap.current) {
+      if (speed.current <= 600 && !snap.current) {
         snap.current = true;
         accumulatedSpeed.current = 0; // Reset accumulated speed when snapping starts
       }
@@ -178,7 +190,7 @@ export default function Craft() {
         return next;
       });
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
-      if (speed.current <= 100) {
+      if (speed.current <= 50) {
         snap.current = false;
         accumulatedSpeed.current = 0;
         cancelAnimationFrame(rafId.current);
@@ -276,7 +288,7 @@ export default function Craft() {
     <main
     onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
-      style={{ perspective: "2900px" }}
+      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 5}px` }}
     >
       <button 
         onClick={toggleFullscreen}

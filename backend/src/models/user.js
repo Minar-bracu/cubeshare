@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
-require('dotenv').config();
 
 // Create a connection pool to PostgreSQL
 // On your local machine, this will fail until you provide a DATABASE_URL
