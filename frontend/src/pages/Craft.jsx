@@ -123,12 +123,7 @@ export default function Craft() {
     );}
 
     // Reset speed if minimal movement
-    console.log(
-      "Distance travelled:",
-      distancetravelled.current,
-      "Duration:",
-      duration,
-    );
+
     if (distancetravelled.current < 100 || duration > 150) {
       accumulatedSpeed.current = 0;
       speed.current = 0;
@@ -214,7 +209,6 @@ export default function Craft() {
     }
     
 
-    console.log("started",distancetravelled.current,durationpassed)
     flickAnimation(e,durationpassed,distancepassed,directionpassed)
     
   }
