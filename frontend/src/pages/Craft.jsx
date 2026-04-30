@@ -124,7 +124,7 @@ export default function Craft() {
     }else{
     distancetravelled.current = Math.sqrt(
       Math.pow(e.clientX - firstPosition.current.x, 2) +
-        Math.pow((e.clientY - firstPosition.current.y) * 0.05, 2),
+        Math.pow(e.clientY - firstPosition.current.y, 2),
     );}
 
     // Reset speed if minimal movement
@@ -138,10 +138,10 @@ export default function Craft() {
     if (distancetravelledvalue){
       newFlickSpeed=distancetravelledvalue/duration;
     }else{
-
+    const sensitivity = window.innerWidth < 768 ? 2.5 : 1.0;
     newFlickSpeed = Math.min(
-      700,
-      (distancetravelled.current / duration) * 1000,
+      1000,
+      (distancetravelled.current / duration) * 1000 * sensitivity,
     );
     }
 
@@ -181,8 +181,11 @@ export default function Craft() {
           if (snap.current) {
             const snappedY = Math.round(next.y / 90) * 90;
             // Smoothly pull the cube toward the snapped angle (0.1 is the snap strength)
-            next.y += (snappedY - next.y) * 0.5;
-          }
+            if (Math.abs(snappedY-next.y)<= 2){
+              next.y = snappedY;
+            }else{
+            next.y += (snappedY - next.y)*0.5;
+          }}
 
           ref.current.style.transform = `rotateX(${0}deg) rotateY(${next.y}deg)`;
         }
@@ -190,7 +193,7 @@ export default function Craft() {
         return next;
       });
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
-      if (speed.current <= 50) {
+      if (speed.current <= 300) {
         snap.current = false;
         accumulatedSpeed.current = 0;
         cancelAnimationFrame(rafId.current);
@@ -288,7 +291,7 @@ export default function Craft() {
     <main
     onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
-      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 5}px` }}
+      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 3}px`, touchAction: "none" }}
     >
       <button 
         onClick={toggleFullscreen}
