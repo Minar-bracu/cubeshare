@@ -29,6 +29,7 @@ export default function useWebRTC(token, user) {
   const transfersRef = useRef({}); // transferId -> transfer state
   const myDeviceId = useRef(generateId());
   const pendingFiles = useRef({}); // transferId -> File
+  const cancelledRef = useRef(new Set()); // track cancelled transferIds
   const receiveBuffers = useRef({}); // transferId -> { chunks, metadata }
 
   // onFileReceived callback ref
@@ -175,6 +176,9 @@ export default function useWebRTC(token, user) {
           };
         } else if (meta.type === "file-complete") {
           finalizeReceive(meta.transferId);
+        } else if (meta.type === "file-cancel") {
+          setTransfers(prev => prev.map(t => t.id === meta.transferId ? { ...t, status: "cancelled" } : t));
+          delete receiveBuffers.current[meta.transferId];
         } else if (meta.type === "text-message") {
           if (onTextReceivedRef.current) {
             onTextReceivedRef.current({
@@ -366,6 +370,11 @@ export default function useWebRTC(token, user) {
     const reader = file.stream().getReader();
     const send = async () => {
       while (true) {
+        if (cancelledRef.current.has(transferId)) {
+          channel.send(JSON.stringify({ type: "file-cancel", transferId }));
+          cancelledRef.current.delete(transferId);
+          return;
+        }
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -478,6 +487,7 @@ export default function useWebRTC(token, user) {
     ));
     setIncomingRequests((prev) => prev.filter((r) => r.transferId !== transferId));
     delete pendingFiles.current[transferId];
+    cancelledRef.current.add(transferId);
     if (targetDeviceId && wsRef.current) {
       wsRef.current.send(JSON.stringify({
         type: "transfer-response",
