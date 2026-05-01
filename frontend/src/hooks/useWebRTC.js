@@ -62,7 +62,7 @@ export default function useWebRTC(token, user) {
       }, 3000);
     };
 
-    ws.onerror = () => {};
+    ws.onerror = () => { };
 
     return () => {
       ws.close();
@@ -444,6 +444,24 @@ export default function useWebRTC(token, user) {
     setIncomingRequests((prev) => prev.filter((r) => r.transferId !== transferId));
   }, []);
 
+  const acceptAllTransfers = useCallback(() => {
+    incomingRequests.forEach((incomingRequest) => {
+      acceptTransfer(incomingRequest.transferId, incomingRequest.fromDeviceId);
+    });
+  }, [incomingRequests, acceptTransfer]);
+
+
+  const rejectAllTransfers = useCallback(() => {
+    incomingRequests.forEach((incomingRequest) => {
+      rejectTransfer(incomingRequest.transferId, incomingRequest.fromDeviceId);
+    });
+  }, [incomingRequests, rejectTransfer]);
+
+
+
+
+
+
   // -- Room codes --
   const createRoom = useCallback(() => {
     wsRef.current?.send(JSON.stringify({ type: "create-room" }));
@@ -458,6 +476,17 @@ export default function useWebRTC(token, user) {
     setTransfers((prev) => prev.map((t) =>
       t.id === transferId ? { ...t, status: "cancelled" } : t
     ));
+    setIncomingRequests((prev) => prev.filter((r) => r.transferId !== transferId));
+    delete pendingFiles.current[transferId];
+    if (targetDeviceId && wsRef.current) {
+      wsRef.current.send(JSON.stringify({
+        type: "transfer-response",
+        to: targetDeviceId,
+        transferId,
+        accepted: false,
+      }));
+    }
+
   }, []);
 
   // -- Clear completed --
@@ -478,6 +507,8 @@ export default function useWebRTC(token, user) {
     sendText,
     acceptTransfer,
     rejectTransfer,
+    acceptAllTransfers,
+    rejectAllTransfers,
     cancelTransfer,
     clearCompleted,
     createRoom,

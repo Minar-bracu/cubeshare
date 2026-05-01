@@ -2,6 +2,7 @@ import { useState, useMemo, memo } from "react";
 
 const Gallery = memo(function Gallery({ fileStore }) {
   const [previewItem, setPreviewItem] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sortBy, setSortBy] = useState("date");
   const [tab, setTab] = useState("received"); // "received" | "sent"
@@ -48,6 +49,11 @@ const Gallery = memo(function Gallery({ fileStore }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function handleDeleteAll() {
+    sortedFiles.forEach(f => deleteFile(f.id));
+    setShowDeleteConfirm(false);
+  }
+
   return (
     <div className="face-content gallery">
       <div className="face-scroll">
@@ -69,6 +75,15 @@ const Gallery = memo(function Gallery({ fileStore }) {
                 {s.charAt(0).toUpperCase() + s.slice(1)}
               </button>
             ))}
+            {sortedFiles.length > 0 && (
+              <button 
+                className="cs-btn cs-btn-danger cs-btn-sm" 
+                onClick={() => setShowDeleteConfirm(true)}
+                style={{ marginLeft: 'auto' }}
+              >
+                Delete All
+              </button>
+            )}
           </div>
         </div>
 
@@ -139,6 +154,21 @@ const Gallery = memo(function Gallery({ fileStore }) {
                   {previewItem.blob && <button className="cs-btn cs-btn-primary cs-btn-sm" onClick={() => handleDownload(previewItem)}>Download</button>}
                   <button className="cs-btn cs-btn-danger cs-btn-sm" onClick={() => { deleteFile(previewItem.id); setPreviewItem(null); }}>Delete</button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDeleteConfirm && (
+          <div className="preview-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="preview-modal" style={{ padding: '2rem', textAlign: 'center', width: '320px' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin: '0 0 1rem 0', color: 'white' }}>Delete All {tab === 'sent' ? 'Sent' : 'Received'}?</h3>
+              <p className="cs-muted" style={{ marginBottom: '2rem', fontSize: '0.9rem' }}>
+                This will permanently delete {sortedFiles.length} item{sortedFiles.length !== 1 ? 's' : ''}. This action cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                <button className="cs-btn cs-btn-ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
+                <button className="cs-btn cs-btn-danger" onClick={handleDeleteAll}>Delete All</button>
               </div>
             </div>
           </div>

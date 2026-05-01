@@ -140,10 +140,16 @@ body {
 }
 
 .theme-simplistic .transfer-card {
-  background: #ffffff;
-  border: 1px solid #d2d2d7;
+  background: #ffffff !important;
+  border: 1px solid #d2d2d7 !important;
   border-radius: 14px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  color: #1d1d1f !important;
+}
+
+.theme-simplistic .transfer-name,
+.theme-simplistic .transfer-meta {
+  color: #1d1d1f !important;
 }
 
 .theme-simplistic .transfer-progress-bar {
@@ -158,8 +164,16 @@ body {
 .theme-simplistic .gallery-item {
   border-radius: 12px;
   border: none;
-  background: #ffffff;
+  background: #ffffff !important;
+  color: #1d1d1f !important;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.theme-simplistic .gallery-item-name,
+.theme-simplistic .gallery-text-thumb,
+.theme-simplistic .gallery-file-thumb,
+.theme-simplistic .gallery-video-thumb {
+  color: #1d1d1f !important;
 }
 
 .theme-simplistic .cs-input, 
@@ -177,25 +191,20 @@ body {
 }
 
 .theme-simplistic .notif-panel {
-  background: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(30px) saturate(190%) !important;
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
-}
-
-.theme-simplistic .notif-panel h3 {
   color: #1d1d1f !important;
 }
 
-.theme-simplistic .notif-panel div[style*="background: rgba(255,255,255,0.05)"] {
-  background: #ffffff !important;
-  border: 1px solid #d2d2d7 !important;
-}
-
-.theme-simplistic .notif-panel strong {
+.theme-simplistic .notif-panel h3,
+.theme-simplistic .notif-panel strong,
+.theme-simplistic .notif-panel span {
   color: #1d1d1f !important;
 }
 
+.theme-simplistic .notif-panel .cs-muted,
 .theme-simplistic .notif-panel div[style*="color: rgba(255,255,255,0.6)"] {
   color: #86868b !important;
 }
