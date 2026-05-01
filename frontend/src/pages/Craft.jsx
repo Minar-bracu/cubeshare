@@ -442,23 +442,19 @@ export default function Craft() {
         {notifPreviewItem && (
           <div
             className="preview-overlay"
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
-            }}
             onClick={() => { setNotifPreviewItem(null); setNotifCopied(false); }}
           >
             <div
               className="preview-modal"
               style={{
-                width: 'min(400px, 90vw)', padding: '1.5rem', borderRadius: '20px',
-                background: 'rgba(30,30,30,0.95)', backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.1)', position: 'relative'
+                width: 'min(400px, 90vw)', padding: '1.5rem',
+                border: theme === 'retro' ? '1px solid rgba(0,255,157,0.3)' : '1px solid rgba(255,255,255,0.1)',
               }}
               onClick={e => e.stopPropagation()}
             >
               <button
-                style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}
+                className="preview-close"
+                style={{ top: '0.75rem', right: '0.75rem' }}
                 onClick={() => { setNotifPreviewItem(null); setNotifCopied(false); }}
               >✕</button>
               <div style={{

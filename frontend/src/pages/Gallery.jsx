@@ -2,6 +2,7 @@ import { useState, useMemo, memo } from "react";
 
 const Gallery = memo(function Gallery({ fileStore }) {
   const [previewItem, setPreviewItem] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [sortBy, setSortBy] = useState("date");
   const [tab, setTab] = useState("received"); // "received" | "sent"
   const { files, deleteFile } = fileStore;
@@ -39,6 +40,12 @@ const Gallery = memo(function Gallery({ fileStore }) {
     const a = document.createElement("a");
     a.href = url; a.download = item.fileName || "download"; a.click();
     URL.revokeObjectURL(url);
+  }
+  
+  function handleCopy(text) {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -97,9 +104,9 @@ const Gallery = memo(function Gallery({ fileStore }) {
         )}
 
         {previewItem && (
-          <div className="preview-overlay" onClick={() => setPreviewItem(null)}>
+          <div className="preview-overlay" onClick={() => { setPreviewItem(null); setCopied(false); }}>
             <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="preview-close" onClick={() => setPreviewItem(null)}>✕</button>
+              <button className="preview-close" onClick={() => { setPreviewItem(null); setCopied(false); }}>✕</button>
               <div className="preview-body">
                 {isTextType(previewItem.type) ? (
                   <div className="preview-text-content">
@@ -121,6 +128,14 @@ const Gallery = memo(function Gallery({ fileStore }) {
               <div className="preview-footer">
                 <span className="preview-name">{previewItem.fileName || "Text"}</span>
                 <div className="preview-actions">
+                  {isTextType(previewItem.type) && (
+                    <button 
+                      className="cs-btn cs-btn-ghost cs-btn-sm" 
+                      onClick={() => handleCopy(previewItem.textContent)}
+                    >
+                      {copied ? "Copied!" : "Copy Text"}
+                    </button>
+                  )}
                   {previewItem.blob && <button className="cs-btn cs-btn-primary cs-btn-sm" onClick={() => handleDownload(previewItem)}>Download</button>}
                   <button className="cs-btn cs-btn-danger cs-btn-sm" onClick={() => { deleteFile(previewItem.id); setPreviewItem(null); }}>Delete</button>
                 </div>

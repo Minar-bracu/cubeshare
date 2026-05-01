@@ -255,6 +255,25 @@ body {
   color: #ffffff !important;
 }
 
+.theme-simplistic .preview-overlay {
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.theme-simplistic .preview-modal {
+  background: rgba(30, 30, 30, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5) !important;
+}
+
+.theme-simplistic .preview-text-content {
+  color: #ffffff !important;
+}
+
+.theme-simplistic .preview-close {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
 .page-container {
   width: 100%;
   max-width: 28rem;
