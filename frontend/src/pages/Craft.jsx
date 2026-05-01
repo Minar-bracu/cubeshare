@@ -327,7 +327,10 @@ export default function Craft() {
     <main
     onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
-      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * (isFullscreen ? 10 : 1)}px`, touchAction: "none" }}
+      style={{ 
+        perspective: `${Math.max(windowSize.width, windowSize.height) * (isFullscreen ? (windowSize.width < 1024 ? 15 : 1.3) : 1)}px`, 
+        touchAction: "none" 
+      }}
     >
       <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 1000, display: 'flex', gap: '0.75rem' }}>
         <button 
