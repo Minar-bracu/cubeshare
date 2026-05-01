@@ -8,10 +8,14 @@
   --cs-glass-hover: rgba(255, 255, 255, 0.12);
   --cs-text: #e0e6ed;
   --cs-text-muted: #8b9bb4;
-  --cs-coral: #ff6b35; /* Bright Orange */
-  --cs-cyan: #4169e1; /* Royal Blue */
-  --cs-gold: #ffd700; /* Golden Yellow */
-  --cs-mint: #00ff9d; /* Neon Mint */
+  --cs-coral: #ff6b35;
+  /* Bright Orange */
+  --cs-cyan: #4169e1;
+  /* Royal Blue */
+  --cs-gold: #ffd700;
+  /* Golden Yellow */
+  --cs-mint: #00ff9d;
+  /* Neon Mint */
   --cs-rose: #ef476f;
   --cs-radius: 14px;
   --cs-radius-sm: 8px;
@@ -22,6 +26,7 @@
 body {
   font-family: 'Silkscreen', cursive;
 }
+
 .page-container {
   width: 100%;
   max-width: 28rem;
@@ -98,7 +103,7 @@ body {
 /* ===== Base ===== */
 /* ===== Cube Faces (Depth & Shadow) ===== */
 .cube-side-face {
-  background: linear-gradient(to right, rgba(255, 215, 0, 0.5) 0%, rgba(255, 107, 53, 0.5) 30%, rgba(65, 105, 225, 0.5) 70%, rgba(0, 255, 157, 0.5) 100%), rgba(13, 17, 23, 0.35) !important;
+  background: linear-gradient(to top, rgba(255, 215, 0, 0.5) 0%, rgba(255, 107, 53, 0.5) 30%, rgba(65, 105, 225, 0.5) 70%, rgba(0, 255, 157, 0.5) 100%), rgba(13, 17, 23, 0.35) !important;
   background-size: 200% 200% !important;
   animation: gradientFlow 8s ease infinite;
   backdrop-filter: blur(16px);
@@ -109,9 +114,17 @@ body {
 }
 
 @keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* No per-face shadows — clean seamless cube */
@@ -1064,8 +1077,8 @@ body {
 /* ===== Background ===== */
 .min-h-screen {
   background-color: #0d1117;
-  background-image: 
-    linear-gradient(to bottom, rgba(0, 255, 157, 0.3) 0%, rgba(65, 105, 225, 0.5) 50%, rgba(255, 107, 53, 0.9) 100%);
+  background-image:
+    linear-gradient(to bottom, rgba(0, 255, 157, 0.3) 0%, rgba(153, 65, 225, 0.658) 100%);
   background-size: 100% 200%;
   animation: bgShift 12s ease-in-out infinite;
   background-position: center;
@@ -1080,9 +1093,17 @@ body {
 }
 
 @keyframes bgShift {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 0% 100%; }
-  100% { background-position: 0% 0%; }
+  0% {
+    background-position: 0% 0%;
+  }
+
+  50% {
+    background-position: 0% 100%;
+  }
+
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 .min-h-screen::before {
@@ -1092,12 +1113,12 @@ body {
   background-image: url('../logo/retrostylelogo.png');
   background-size: 180px;
   background-repeat: repeat;
-  opacity: 0.3;
+  opacity: 0.1;
   pointer-events: none;
   z-index: 0;
 }
 
-.main-container > * {
+.main-container>* {
   position: relative;
   z-index: 1;
 }
