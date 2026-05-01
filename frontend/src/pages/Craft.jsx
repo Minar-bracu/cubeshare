@@ -205,6 +205,24 @@ export default function Craft() {
       
       rotationRef.current = nextY;
       if (ref.current) {
+        const blurAmount = Math.min(4, speed.current * 0.004); 
+        const isHighSpeed = speed.current > 1500;
+        
+        // Use CSS variables instead of 'filter' on the container to prevent 3D flattening
+        ref.current.style.setProperty('--cube-blur', `${blurAmount}px`);
+        
+        if (isHighSpeed) {
+          const rx = (Math.random() - 0.5) * 15;
+          const ry = (Math.random() - 0.5) * 15;
+          ref.current.style.setProperty('--spark-x', `${rx}px`);
+          ref.current.style.setProperty('--spark-y', `${ry}px`);
+          ref.current.style.setProperty('--spark-opacity', '1');
+          ref.current.style.setProperty('--spark-color1', theme === 'retro' ? 'var(--cs-mint)' : 'var(--cs-coral)');
+          ref.current.style.setProperty('--spark-color2', 'var(--cs-rose)');
+        } else {
+          ref.current.style.setProperty('--spark-opacity', '0');
+        }
+        
         ref.current.style.transform = `rotateX(${rotationXRef.current}deg) rotateY(${nextY}deg)`;
       }
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
@@ -219,6 +237,7 @@ export default function Craft() {
         cancelAnimationFrame(rafId.current);
         rafId.current = null;
         setDisplaySpeed(0);
+        if (ref.current) ref.current.style.filter = "none";
         // Final sync with React state only when animation stops
         setCubestate({ x: rotationXRef.current, y: rotationRef.current });
         return;
