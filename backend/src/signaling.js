@@ -189,15 +189,19 @@ function setupSignaling(wss, server) {
           // Notify both sides
           const hostWs = findWsByDeviceId(room.deviceId);
           if (hostWs) {
+            // Tell the host a peer joined
             hostWs.send(JSON.stringify({
               type: "peer-joined",
               peerId: myInfo.deviceId,
               username: myInfo.username,
+              isHost: false, // The incoming peer is not the host
             }));
+            // Tell the joiner they successfully joined the host
             ws.send(JSON.stringify({
               type: "peer-joined",
               peerId: room.deviceId,
               username: room.username,
+              isHost: true, // The other side is the host
             }));
           }
           roomCodes.delete(msg.code);

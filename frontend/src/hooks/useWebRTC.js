@@ -110,7 +110,15 @@ export default function useWebRTC(token, user) {
         setRoomCode(msg.code);
         break;
       case "peer-joined":
-        setConnectedPeers((prev) => [...prev, { peerId: msg.peerId, username: msg.username }]);
+        setConnectedPeers((prev) => {
+          if (prev.find((p) => p.peerId === msg.peerId)) return prev;
+          return [...prev, { peerId: msg.peerId, username: msg.username }];
+        });
+        // Auto-connect if we are the joiner (joining a host)
+        if (msg.isHost) {
+          connectToPeer(msg.peerId);
+        }
+        setRoomCode(null);
         break;
       case "peer-left":
         setConnectedPeers((prev) => prev.filter((p) => p.peerId !== msg.peerId));

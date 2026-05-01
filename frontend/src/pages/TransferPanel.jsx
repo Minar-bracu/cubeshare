@@ -118,8 +118,8 @@ const TransferPanel = memo(function TransferPanel({ webrtc, fileStore, broadcast
               {allTargets.map((t) => (
                 <button
                   key={t.deviceId}
-                  className={`target-chip ${selectedTarget?.deviceId === t.deviceId ? "selected" : ""}`}
-                  onClick={() => setSelectedTarget(t)}
+                  className={`target-chip ${t.deviceId && selectedTarget?.deviceId === t.deviceId ? "selected" : ""}`}
+                  onClick={() => setSelectedTarget(prev => prev?.deviceId === t.deviceId ? null : t)}
                 >
                   <span className="target-dot" />
                   <span>{t.label}</span>
