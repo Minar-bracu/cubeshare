@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { memo } from "react";
+import retroLogo from "../logo/retrostylelogo.png";
 
 const Dashboard = memo(function Dashboard({triggerspin}) {
   const { user, logout } = useAuth();
@@ -7,6 +8,9 @@ const Dashboard = memo(function Dashboard({triggerspin}) {
   return (
     <div className="face-content dashboard">
       <div className="face-scroll">
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <img src={retroLogo} alt="CubeShare Retro Logo" style={{ width: '100%', maxWidth: '240px', filter: 'drop-shadow(0 0 10px rgba(0,255,157,0.2))' }} />
+        </div>
         <div className="dash-header">
           <div className="dash-greeting">
             <span className="dash-wave">👋</span>

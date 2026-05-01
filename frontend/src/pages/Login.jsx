@@ -3,6 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL } from "../config";
 import "./pages.css";
 
+import retroLogo from "../logo/retrostylelogo.png";
+
 export default function Login() {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
@@ -81,9 +83,11 @@ export default function Login() {
         color: "var(--cs-text)",
       }}
     >
-      <h1 className="face-title" style={{ fontSize: "2rem", marginBottom: "1.5rem" }}>
-        Welcome
-      </h1>
+      <img 
+        src={retroLogo} 
+        alt="CubeShare Retro Logo" 
+        style={{ width: "100%", maxWidth: "320px", marginBottom: "2rem", filter: "drop-shadow(0 0 15px rgba(0,255,157,0.3))" }} 
+      />
 
       <form
         onSubmit={handleLogin}

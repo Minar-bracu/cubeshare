@@ -8,7 +8,7 @@ import Gallery from "./Gallery";
 import Profile from "./Profile";
 import LockedOverlay from "../components/LockedOverlay";
 import useWebRTC from "../hooks/useWebRTC";
-import { Maximize, Minimize, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
+import { Maximize, Minimize, ChevronLeft, ChevronRight, LayoutDashboard, Bell, X } from "lucide-react";
 import useFileStore from "../hooks/useFileStore";
 import useBroadcastChannel from "../hooks/useBroadcastChannel";
 
@@ -20,6 +20,7 @@ export default function Craft() {
   const [displaySpeed, setDisplaySpeed] = useState(0);
   const ref = useRef(null);
   const rotationRef = useRef(0);
+  const rotationXRef = useRef(0);
   const isDragging = useRef(false);
   const startTime = useRef(0);
   const distancetravelled = useRef(0);
@@ -33,6 +34,11 @@ export default function Craft() {
   const prevMousePos = useRef({ x: 0, y: 0 });
   const snap = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifPreviewItem, setNotifPreviewItem] = useState(null);
+  const [notifCopied, setNotifCopied] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [clearedRequestIds, setClearedRequestIds] = useState(new Set());
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -68,7 +74,9 @@ export default function Craft() {
       fileStore.saveFile(data.blob, { fileName: data.fileName, fileSize: data.fileSize, mimeType: data.mimeType, fromUser: data.fromUser, type: "file" });
     });
     webrtc.setOnTextReceived((data) => {
+      const textItem = { id: Date.now(), type: "text", textContent: data.textContent, fromUser: data.fromUser, receivedAt: Date.now() };
       fileStore.saveFile(null, { fileName: "Text", type: "text", textContent: data.textContent, fromUser: data.fromUser });
+      setNotifications(prev => [textItem, ...prev].slice(0, 20));
     });
   }, [webrtc, fileStore]);
 
@@ -104,15 +112,18 @@ export default function Craft() {
     }
 
     const deltaY = e.clientX - prevMousePos.current.x;
+    const deltaX = e.clientY - prevMousePos.current.y;
     prevMousePos.current = { x: e.clientX, y: e.clientY };
 
     let rotY = deltaY * 0.05;
+    let rotX = -deltaX * 0.05;
 
     advanceChar(Math.abs(rotY));
 
     rotationRef.current = (rotationRef.current + rotY) % 360;
+    rotationXRef.current = Math.max(-10, Math.min(10, rotationXRef.current + rotX));
     if (ref.current) {
-      ref.current.style.transform = `rotateX(${0}deg) rotateY(${rotationRef.current}deg)`;
+      ref.current.style.transform = `rotateX(${rotationXRef.current}deg) rotateY(${rotationRef.current}deg)`;
     }
   }
 
@@ -192,7 +203,7 @@ export default function Craft() {
       
       rotationRef.current = nextY;
       if (ref.current) {
-        ref.current.style.transform = `rotateX(${0}deg) rotateY(${nextY}deg)`;
+        ref.current.style.transform = `rotateX(${rotationXRef.current}deg) rotateY(${nextY}deg)`;
       }
       speed.current = Math.max(0, speed.current - speed.current * deceleration);
       
@@ -207,7 +218,7 @@ export default function Craft() {
         rafId.current = null;
         setDisplaySpeed(0);
         // Final sync with React state only when animation stops
-        setCubestate({ x: 0, y: rotationRef.current });
+        setCubestate({ x: rotationXRef.current, y: rotationRef.current });
         return;
       }
       rafId.current = requestAnimationFrame(animate);
@@ -232,7 +243,7 @@ export default function Craft() {
 
   function handlePointerDown(e) {
     // Don't capture pointer events if clicking on interactive elements
-    if (e.target.closest("button, input, textarea, a, .dash-card, [role='button']")) {
+    if (e.target.closest("button, input, textarea, a, .dash-card, .gallery-item, .drop-zone, .notif-panel, .notif-btn, .preview-overlay, [role='button']")) {
       return;
     }
 
@@ -295,7 +306,7 @@ export default function Craft() {
     <main
     onPointerDown={handlePointerDown}
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
-      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) * 5}px`, touchAction: "none" }}
+      style={{ perspective: `${Math.max(windowSize.width, windowSize.height) }px`, touchAction: "none" }}
     >
       <button 
         onClick={toggleFullscreen}
@@ -304,6 +315,171 @@ export default function Craft() {
       >
         {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
       </button>
+
+      {/* ── Notification System ── */}
+      <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', zIndex: 1100 }}>
+        <button
+          className="cs-btn cs-btn-ghost notif-btn"
+          onClick={() => setIsNotifOpen(prev => !prev)}
+          style={{
+            position: 'relative', padding: '0.5rem',
+            background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)',
+            borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)'
+          }}
+        >
+          <Bell size={24} color="white" />
+          {((webrtc?.incomingRequests?.filter(r => !clearedRequestIds.has(r.transferId)).length > 0) || notifications.length > 0) && (
+            <span style={{
+              position: 'absolute', top: '4px', right: '4px',
+              width: '10px', height: '10px', background: '#ff4444',
+              borderRadius: '50%', border: '2px solid #1a1a1a'
+            }} />
+          )}
+        </button>
+
+        {isNotifOpen && (
+          <div className="notif-panel" style={{
+            position: 'absolute', top: '3.5rem', left: 0, width: '290px',
+            maxHeight: '420px', overflowY: 'auto', borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.1)', padding: '1rem',
+            backdropFilter: 'blur(20px)', background: 'rgba(20,20,20,0.88)',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.55)'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <h3 style={{ color: 'white', margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Notifications</h3>
+              <button onClick={() => setIsNotifOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '2px' }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Items */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {/* Incoming transfer requests */}
+              {webrtc?.incomingRequests?.filter(r => !clearedRequestIds.has(r.transferId)).map(req => (
+                <div key={req.transferId} style={{
+                  background: 'rgba(255,255,255,0.05)', padding: '0.75rem',
+                  borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <div style={{ fontSize: '0.8rem', color: 'white', marginBottom: '0.5rem' }}>
+                    <strong>{req.fromUsername}</strong> wants to send:
+                    <div style={{ color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>
+                      {req.isText ? 'Text message' : req.fileName}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="cs-btn cs-btn-accept cs-btn-sm"
+                      style={{ flex: 1, padding: '4px 8px' }}
+                      onClick={() => webrtc.acceptTransfer(req.transferId, req.fromDeviceId)}
+                    >Accept</button>
+                    <button
+                      className="cs-btn cs-btn-reject cs-btn-sm"
+                      style={{ flex: 1, padding: '4px 8px' }}
+                      onClick={() => webrtc.rejectTransfer(req.transferId, req.fromDeviceId)}
+                    >Decline</button>
+                  </div>
+                </div>
+              ))}
+
+              {/* Recent text notifications */}
+              {notifications.map(n => (
+                <div key={n.id} style={{
+                  background: 'rgba(255,255,255,0.05)', padding: '0.75rem',
+                  borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)',
+                  cursor: 'pointer'
+                }} onClick={() => setNotifPreviewItem(n)}>
+                  <div style={{ fontSize: '0.8rem', color: 'white' }}>
+                    <strong>{n.fromUser}</strong> sent a message:
+                    <div style={{
+                      color: 'rgba(255,255,255,0.6)', marginTop: '3px',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                      {n.textContent}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Empty state */}
+              {(webrtc?.incomingRequests?.filter(r => !clearedRequestIds.has(r.transferId)).length === 0) && notifications.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '1.25rem 0', color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>
+                  No new notifications
+                </div>
+              )}
+            </div>
+
+            {/* Clear button */}
+            {((webrtc?.incomingRequests?.some(r => !clearedRequestIds.has(r.transferId))) || notifications.length > 0) && (
+              <button
+                onClick={() => {
+                  const ids = (webrtc?.incomingRequests || []).map(r => r.transferId);
+                  setClearedRequestIds(prev => new Set([...prev, ...ids]));
+                  setNotifications([]);
+                }}
+                className="cs-btn cs-btn-ghost cs-btn-sm"
+                style={{ width: '100%', marginTop: '0.85rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}
+              >
+                Clear all notifications
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Text preview modal (same style as Gallery) */}
+        {notifPreviewItem && (
+          <div
+            className="preview-overlay"
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
+            }}
+            onClick={() => { setNotifPreviewItem(null); setNotifCopied(false); }}
+          >
+            <div
+              className="preview-modal"
+              style={{
+                width: 'min(400px, 90vw)', padding: '1.5rem', borderRadius: '20px',
+                background: 'rgba(30,30,30,0.95)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)', position: 'relative'
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem' }}
+                onClick={() => { setNotifPreviewItem(null); setNotifCopied(false); }}
+              >✕</button>
+              <div style={{
+                background: 'rgba(255,255,255,0.05)', padding: '1rem',
+                borderRadius: '12px', color: 'white', fontSize: '0.9rem',
+                lineHeight: 1.6, marginTop: '0.5rem', wordBreak: 'break-word'
+              }}>
+                <p style={{ margin: 0 }}>{notifPreviewItem.textContent}</p>
+                {notifPreviewItem.textContent?.match(/^https?:\/\//) && (
+                  <a
+                    href={notifPreviewItem.textContent}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cs-btn cs-btn-primary"
+                    style={{ marginTop: '0.75rem', display: 'inline-flex' }}
+                  >Open Link</a>
+                )}
+              </div>
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>From {notifPreviewItem.fromUser}</span>
+                <button
+                  className="cs-btn cs-btn-ghost cs-btn-sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(notifPreviewItem.textContent);
+                    setNotifCopied(true);
+                    setTimeout(() => setNotifCopied(false), 2000);
+                  }}
+                >{notifCopied ? 'Copied!' : 'Copy Text'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Navigation Controls */}
       <div className="nav-controls" style={{
@@ -406,7 +582,7 @@ export default function Craft() {
           height: cubeHeight,
           position: "relative",
           transformStyle: "preserve-3d",
-          transform: `rotateX(${0}deg) rotateY(${cubestate.y}deg)`,
+          transform: `rotateX(${cubestate.x}deg) rotateY(${cubestate.y}deg)`,
           touchAction: "none",
         }}
         className="dynamic-cube retro-gloss-theme"
@@ -430,7 +606,7 @@ export default function Craft() {
             position: "absolute",
             width: "100%",
             height: "100%",
-            transform: `translateZ(calc(${cubeDepth} * 2))`,
+            transform: `translateZ(${cubeDepth})`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -460,7 +636,7 @@ export default function Craft() {
             position: "absolute",
             width: "100%",
             height: "100%",
-            transform: `rotateY(180deg) translateZ(calc(${cubeDepth} * 2))`,
+            transform: `rotateY(180deg) translateZ(${cubeDepth})`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -476,7 +652,7 @@ export default function Craft() {
             position: "absolute",
             width: `calc(${cubeDepth} * 2)`,
             height: "100%",
-            transform: `translateX(calc(${halfWidth} * -2)) rotateY(-90deg)`,
+            transform: `translateX(calc(${halfWidth} * -1)) rotateY(-90deg)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -494,7 +670,7 @@ export default function Craft() {
             position: "absolute",
             width: `calc(${cubeDepth} * 2)`,
             height: "100%",
-            transform: `translateX(calc(${halfWidth} * 2)) rotateY(90deg)`,
+            transform: `translateX(${halfWidth}) rotateY(90deg)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -507,12 +683,13 @@ export default function Craft() {
           {isAuthenticated ? <Profile webrtc={webrtc} /> : <Login />}
         </div>
         <div
+          className="cube-side-face"
           style={{
             position: "absolute",
             width: "100%",
             height: `calc(${cubeDepth} * 2)`,
-            background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-            transform: `translateY(calc(${halfHeight} * -2)) rotateX(90deg)`,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
+            transform: `translateY(calc(${halfHeight} * -1)) rotateX(90deg)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -521,20 +698,15 @@ export default function Craft() {
             marginTop: `calc(${cubeDepth} * -1)`,
             touchAction: "none",
           }}
-        >
-          <span
-            style={{ fontSize: "2rem", color: "white", fontWeight: "bold" }}
-          >
-            Top
-          </span>
-        </div>
+        />
         <div
+          className="cube-side-face"
           style={{
             position: "absolute",
             width: "100%",
             height: `calc(${cubeDepth} * 2)`,
-            background: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-            transform: `translateY(calc(${halfHeight} * 2)) rotateX(-90deg)`,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%)",
+            transform: `translateY(${halfHeight}) rotateX(-90deg)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -543,13 +715,7 @@ export default function Craft() {
             marginTop: `calc(${cubeDepth} * -1)`,
             touchAction: "none",
           }}
-        >
-          <span
-            style={{ fontSize: "2rem", color: "white", fontWeight: "bold" }}
-          >
-            Bottom
-          </span>
-        </div>
+        />
       </div>
       {displaySpeed > 3000 && (
         <div
@@ -560,11 +726,11 @@ export default function Craft() {
             left: "50%",
             fontSize: `${letterFontSize}px`,
             fontWeight: "900",
-            color: "#ffffff",
+            color: "#00ff9d",
             textShadow:
               "0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(100, 200, 255, 0.6)",
             letterSpacing: "4px",
-            fontFamily: "Arial, sans-serif",
+            fontFamily: "'Press Start 2P', cursive",
             userSelect: "none",
             pointerEvents: "none",
             opacity: 0.7,
