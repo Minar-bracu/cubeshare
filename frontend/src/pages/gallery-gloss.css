@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 /* Main Container (applies to all cube faces) */
-.cube-side-face {
+.retro-gloss-theme .cube-side-face {
   background: #00b8d4 !important; /* Vibrant Teal */
   box-shadow: none !important;
   border-radius: 0 !important;

@@ -8,11 +8,13 @@ import Gallery from "./Gallery";
 import Profile from "./Profile";
 import LockedOverlay from "../components/LockedOverlay";
 import useWebRTC from "../hooks/useWebRTC";
-import { Maximize, Minimize, ChevronLeft, ChevronRight, LayoutDashboard, Bell, X } from "lucide-react";
+import { Maximize, Minimize, ChevronLeft, ChevronRight, LayoutDashboard, Bell, X, Palette, Moon, Sun } from "lucide-react";
 import useFileStore from "../hooks/useFileStore";
 import useBroadcastChannel from "../hooks/useBroadcastChannel";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Craft() {
+  const { theme, toggleTheme } = useTheme();
   const [cubestate, setCubestate] = useState({ x: 0, y: 0 });
   const [messageText] = useState("   C C R R E E A A T T E E D D   B B B Y Y Y   M M M I I I N N N A A A R R R         ");
   const [currentCharIndex, setCurrentCharIndex] = useState(0);
@@ -308,13 +310,23 @@ export default function Craft() {
       className="min-h-screen grid place-items-center bg-white-900 relative overflow-hidden main-container"
       style={{ perspective: `${Math.max(windowSize.width, windowSize.height) }px`, touchAction: "none" }}
     >
-      <button 
-        onClick={toggleFullscreen}
-        className="cs-btn cs-btn-ghost fullscreen-btn"
-        style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 1000, padding: '0.5rem' }}
-      >
-        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
-      </button>
+      <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', zIndex: 1000, display: 'flex', gap: '0.75rem' }}>
+        <button 
+          onClick={toggleTheme}
+          className="cs-btn cs-btn-ghost theme-toggle-btn"
+          style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+          title={`Switch to ${theme === 'retro' ? 'Simplistic' : 'Retro'} theme`}
+        >
+          {theme === 'retro' ? <Palette size={24} color="white" /> : <Moon size={24} color="#1d1d1f" />}
+        </button>
+        <button 
+          onClick={toggleFullscreen}
+          className="cs-btn cs-btn-ghost fullscreen-btn"
+          style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(10px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          {isFullscreen ? <Minimize size={24} color={theme === 'retro' ? "white" : "#1d1d1f"} /> : <Maximize size={24} color={theme === 'retro' ? "white" : "#1d1d1f"} />}
+        </button>
+      </div>
 
       {/* ── Notification System ── */}
       <div style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', zIndex: 1100 }}>
@@ -327,7 +339,7 @@ export default function Craft() {
             borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)'
           }}
         >
-          <Bell size={24} color="white" />
+          <Bell size={24} color={theme === 'retro' ? "white" : "#1d1d1f"} />
           {((webrtc?.incomingRequests?.filter(r => !clearedRequestIds.has(r.transferId)).length > 0) || notifications.length > 0) && (
             <span style={{
               position: 'absolute', top: '4px', right: '4px',
@@ -511,7 +523,7 @@ export default function Craft() {
             color: 'white'
           }}
         >
-          <ChevronLeft size={32} />
+          <ChevronLeft size={32} color={theme === 'retro' ? "white" : "#1d1d1f"} />
         </button>
 
         <button 
@@ -550,7 +562,7 @@ export default function Craft() {
             boxShadow: '0 0 20px rgba(255,255,255,0.05)'
           }}
         >
-          <LayoutDashboard size={36} />
+          <LayoutDashboard size={36} color={theme === 'retro' ? "white" : "#1d1d1f"} />
         </button>
 
         <button 
@@ -570,7 +582,7 @@ export default function Craft() {
             color: 'white'
           }}
         >
-          <ChevronRight size={32} />
+          <ChevronRight size={32} color={theme === 'retro' ? "white" : "#1d1d1f"} />
         </button>
       </div>
 
@@ -585,7 +597,7 @@ export default function Craft() {
           transform: `rotateX(${cubestate.x}deg) rotateY(${cubestate.y}deg)`,
           touchAction: "none",
         }}
-        className="dynamic-cube retro-gloss-theme"
+        className={`dynamic-cube ${theme === 'retro' ? 'retro-gloss-theme' : ''}`}
       >
         {/* Global SVG Gradient Definition for retro-pixel icons */}
         <svg width="0" height="0" style={{ position: 'absolute' }}>
