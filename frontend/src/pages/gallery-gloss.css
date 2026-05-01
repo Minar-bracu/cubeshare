@@ -1,12 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-/* Main Container (applies to all cube faces) */
-.retro-gloss-theme .cube-side-face {
-  background: #00b8d4 !important; /* Vibrant Teal */
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  border: none !important;
-}
+/* Base cube face styles moved to pages.css to support dynamic gradients */
 
 /* Pixel Art Header */
 .retro-gloss-theme .face-title {
