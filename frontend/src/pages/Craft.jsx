@@ -395,9 +395,9 @@ export default function Craft() {
                   background: 'rgba(255,255,255,0.05)', padding: '0.75rem',
                   borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)'
                 }}>
-                  <div style={{ fontSize: '0.8rem', color: 'white', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#a3999991', marginBottom: '0.5rem' }}>
                     <strong>{req.fromUsername}</strong> wants to send:
-                    <div style={{ color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.36)', marginTop: '3px' }}>
                       {req.isText ? 'Text message' : req.fileName}
                     </div>
                   </div>
