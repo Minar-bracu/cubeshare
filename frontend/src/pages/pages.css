@@ -85,6 +85,18 @@ body {
   background: #0077ed;
 }
 
+.theme-simplistic .cs-btn-accept,
+.theme-simplistic .cs-btn-reject {
+  background: #1d1d1f !important;
+  color: #ffffff !important;
+  border-color: #1d1d1f !important;
+}
+
+.theme-simplistic .cs-btn-accept:hover,
+.theme-simplistic .cs-btn-reject:hover {
+  background: #2c2c2e !important;
+}
+
 .theme-simplistic .dash-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
