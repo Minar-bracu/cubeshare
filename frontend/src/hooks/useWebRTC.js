@@ -8,24 +8,23 @@ const ICE_CONFIG = {
     { urls: "stun:stun2.l.google.com:19302" },
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
-    // Free TURN servers for internet connectivity
+    // Metered.ca Open Relay - Using both TURN and TURNS (TLS)
     {
-      urls: ["turn:openrelay.metered.ca:80"],
+      urls: [
+        "turn:openrelay.metered.ca:80",
+        "turn:openrelay.metered.ca:443",
+        "turn:openrelay.metered.ca:443?transport=tcp",
+        "turns:openrelay.metered.ca:443?transport=tcp",
+      ],
       username: "openrelayproject",
       credential: "openrelayproject",
     },
-    {
-      urls: ["turn:openrelay.metered.ca:443"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: ["turn:openrelay.metered.ca:443?transport=tcp"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
+    // Adding another public relay as fallback if available (Optional)
+    // Note: Most free relays are unreliable. For production, use Twilio/Xirsys.
   ],
+  iceCandidatePoolSize: 10,
 };
+
 
 const CHUNK_SIZE = 64 * 1024; // 64KB chunks
 
@@ -158,20 +157,37 @@ export default function useWebRTC(token, user) {
     peersRef.current[remoteDeviceId] = pc;
 
     pc.onicecandidate = (e) => {
-      if (e.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: "ice-candidate",
-          to: remoteDeviceId,
-          candidate: e.candidate,
-        }));
+      if (e.candidate) {
+        // Debug candidate types
+        const candidateType = e.candidate.candidate.split(" ")[7];
+        console.log(`[ICE] New candidate: type=${candidateType}, proto=${e.candidate.protocol}, address=${e.candidate.address}`);
+        
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: "ice-candidate",
+            to: remoteDeviceId,
+            candidate: e.candidate,
+          }));
+        }
+      } else {
+        console.log("[ICE] Gathering complete.");
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[ICE] Connection state: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === "failed") {
+        console.warn("[ICE] Connection failed. This usually means NAT traversal failed and no TURN server was available or working.");
       }
     };
 
     pc.ondatachannel = (e) => {
+      console.log("[WebRTC] Received remote data channel");
       setupDataChannel(e.channel, remoteDeviceId);
     };
 
     pc.onconnectionstatechange = () => {
+      console.log(`[WebRTC] Peer connection state: ${pc.connectionState}`);
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         cleanupPeer(remoteDeviceId);
       }
@@ -179,6 +195,7 @@ export default function useWebRTC(token, user) {
 
     return pc;
   }
+
 
   function setupDataChannel(channel, remoteDeviceId) {
     channelsRef.current[remoteDeviceId] = channel;
@@ -337,7 +354,7 @@ export default function useWebRTC(token, user) {
             resolve();
           }
         }, 100);
-        setTimeout(() => { clearInterval(check); resolve(); }, 10000);
+        setTimeout(() => { clearInterval(check); resolve(); }, 45000);
       });
     }
 
@@ -431,7 +448,7 @@ export default function useWebRTC(token, user) {
             resolve();
           }
         }, 100);
-        setTimeout(() => { clearInterval(check); resolve(); }, 10000);
+        setTimeout(() => { clearInterval(check); resolve(); }, 45000);
       });
     }
 
