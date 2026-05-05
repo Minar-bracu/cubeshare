@@ -50,6 +50,26 @@ function generateId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+      bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 export default function useWebRTC(token, user) {
   const [isConnected, setIsConnected] = useState(false);
   const [myDevices, setMyDevices] = useState([]);
@@ -169,6 +189,39 @@ export default function useWebRTC(token, user) {
       case "peer-left":
         setConnectedPeers((prev) => prev.filter((p) => p.peerId !== msg.peerId));
         cleanupPeer(msg.peerId);
+        break;
+      // -- WebSocket Relay Handlers --
+      case "relay-meta":
+        receiveBuffers.current[msg.transferId] = {
+          chunks: [],
+          metadata: { ...msg, type: "file-meta" },
+          received: 0,
+        };
+        break;
+      case "relay-chunk": {
+        const buf = receiveBuffers.current[msg.transferId];
+        if (buf) {
+          const chunkBuf = base64ToArrayBuffer(msg.data);
+          buf.chunks.push(chunkBuf);
+          buf.received += chunkBuf.byteLength;
+          updateTransferProgress(msg.transferId, buf.received, buf.metadata.fileSize, "receiving");
+        }
+        break;
+      }
+      case "relay-complete":
+        finalizeReceive(msg.transferId);
+        break;
+      case "relay-cancel":
+        setTransfers(prev => prev.map(t => t.id === msg.transferId ? { ...t, status: "cancelled" } : t));
+        delete receiveBuffers.current[msg.transferId];
+        break;
+      case "relay-text":
+        if (onTextReceivedRef.current) {
+          onTextReceivedRef.current({
+            textContent: msg.textContent,
+            fromUser: msg.fromUser || "Unknown",
+          });
+        }
         break;
       default:
         break;
@@ -410,23 +463,31 @@ export default function useWebRTC(token, user) {
     return transferId;
   }, []);
 
-  // -- Actually send file data over DataChannel --
+  // -- Actually send file data over DataChannel or WebSocket Relay --
   async function startSending(targetDeviceId, file, transferId) {
     const channel = channelsRef.current[targetDeviceId];
-    if (!channel || channel.readyState !== "open") {
-      updateTransferProgress(transferId, 0, file.size, "error");
-      return;
-    }
+    const isRelay = !channel || channel.readyState !== "open";
 
-    // Send metadata
-    channel.send(JSON.stringify({
-      type: "file-meta",
-      transferId,
-      fileName: file.name,
-      fileSize: file.size,
-      mimeType: file.type,
-      fromUser: user?.username || "Unknown",
-    }));
+    if (isRelay) {
+      console.log("[Relay] WebRTC failed, falling back to WebSocket relay");
+      wsRef.current.send(JSON.stringify({
+        type: "relay-meta",
+        to: targetDeviceId,
+        transferId,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+      }));
+    } else {
+      channel.send(JSON.stringify({
+        type: "file-meta",
+        transferId,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        fromUser: user?.username || "Unknown",
+      }));
+    }
 
     // Send file in chunks
     let offset = 0;
@@ -434,7 +495,11 @@ export default function useWebRTC(token, user) {
     const send = async () => {
       while (true) {
         if (cancelledRef.current.has(transferId)) {
-          channel.send(JSON.stringify({ type: "file-cancel", transferId }));
+          if (isRelay) {
+            wsRef.current.send(JSON.stringify({ type: "relay-cancel", to: targetDeviceId, transferId }));
+          } else {
+            channel.send(JSON.stringify({ type: "file-cancel", transferId }));
+          }
           cancelledRef.current.delete(transferId);
           return;
         }
@@ -446,18 +511,37 @@ export default function useWebRTC(token, user) {
           const end = Math.min(chunkOffset + CHUNK_SIZE, value.byteLength);
           const chunk = value.slice(chunkOffset, end);
 
-          // Backpressure: wait if buffered amount is too high
-          while (channel.bufferedAmount > 1024 * 1024) {
-            await new Promise((r) => setTimeout(r, 50));
+          if (isRelay) {
+            // Backpressure for WebSocket
+            while (wsRef.current.bufferedAmount > 1024 * 1024) {
+              await new Promise((r) => setTimeout(r, 50));
+            }
+            wsRef.current.send(JSON.stringify({
+              type: "relay-chunk",
+              to: targetDeviceId,
+              transferId,
+              data: arrayBufferToBase64(chunk),
+              offset
+            }));
+          } else {
+            // Backpressure for WebRTC
+            while (channel.bufferedAmount > 1024 * 1024) {
+              await new Promise((r) => setTimeout(r, 50));
+            }
+            channel.send(chunk);
           }
 
-          channel.send(chunk);
           offset += chunk.byteLength;
           chunkOffset = end;
           updateTransferProgress(transferId, offset, file.size, "sending");
         }
       }
-      channel.send(JSON.stringify({ type: "file-complete", transferId }));
+      
+      if (isRelay) {
+        wsRef.current.send(JSON.stringify({ type: "relay-complete", to: targetDeviceId, transferId }));
+      } else {
+        channel.send(JSON.stringify({ type: "file-complete", transferId }));
+      }
       updateTransferProgress(transferId, file.size, file.size, "complete");
     };
 
@@ -485,6 +569,12 @@ export default function useWebRTC(token, user) {
         type: "text-message",
         textContent: text,
         fromUser: user?.username || "Unknown",
+      }));
+    } else {
+      wsRef.current?.send(JSON.stringify({
+        type: "relay-text",
+        to: targetDeviceId,
+        textContent: text,
       }));
     }
   }, [user]);

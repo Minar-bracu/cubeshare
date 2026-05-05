@@ -170,6 +170,75 @@ function setupSignaling(wss, server) {
           break;
         }
 
+        // -- WebSocket Relay Fallback --
+        // When P2P/TURN both fail, files are relayed through the signaling server.
+        case "relay-meta": {
+          const target = findWsByDeviceId(msg.to);
+          if (target) {
+            target.send(JSON.stringify({
+              type: "relay-meta",
+              from: myInfo.deviceId,
+              transferId: msg.transferId,
+              fileName: msg.fileName,
+              fileSize: msg.fileSize,
+              mimeType: msg.mimeType,
+              fromUser: myInfo.username,
+            }));
+          }
+          break;
+        }
+
+        case "relay-chunk": {
+          const target = findWsByDeviceId(msg.to);
+          if (target) {
+            target.send(JSON.stringify({
+              type: "relay-chunk",
+              from: myInfo.deviceId,
+              transferId: msg.transferId,
+              data: msg.data, // base64 encoded chunk
+              offset: msg.offset,
+            }));
+          }
+          break;
+        }
+
+        case "relay-complete": {
+          const target = findWsByDeviceId(msg.to);
+          if (target) {
+            target.send(JSON.stringify({
+              type: "relay-complete",
+              from: myInfo.deviceId,
+              transferId: msg.transferId,
+            }));
+          }
+          break;
+        }
+
+        case "relay-cancel": {
+          const target = findWsByDeviceId(msg.to);
+          if (target) {
+            target.send(JSON.stringify({
+              type: "relay-cancel",
+              from: myInfo.deviceId,
+              transferId: msg.transferId,
+            }));
+          }
+          break;
+        }
+
+        case "relay-text": {
+          const target = findWsByDeviceId(msg.to);
+          if (target) {
+            target.send(JSON.stringify({
+              type: "relay-text",
+              from: myInfo.deviceId,
+              textContent: msg.textContent,
+              fromUser: myInfo.username,
+            }));
+          }
+          break;
+        }
+
         case "create-room": {
           const code = String(Math.floor(100000 + Math.random() * 900000));
           roomCodes.set(code, {
