@@ -17,6 +17,9 @@ const authRoutes = require('./routes/authroute');
 
 const port = process.env.PORT || 10000;
 
+// Trust proxy - required for accurate IP identification when behind a reverse proxy (e.g., Render)
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 
