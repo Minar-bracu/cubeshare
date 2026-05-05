@@ -14,6 +14,7 @@ const { initDb } = require('./models/user');
 
 const userRoutes = require('./routes/userroute');
 const authRoutes = require('./routes/authroute');
+const turnRoutes = require('./routes/turnroute');
 
 const port = process.env.PORT || 10000;
 
@@ -40,6 +41,7 @@ const authLimiter = rateLimit({
 
 app.use('/api/users', authLimiter, userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/turn', turnRoutes);
 
 // Central error handler
 app.use((err, req, res, next) => {

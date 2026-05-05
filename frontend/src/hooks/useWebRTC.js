@@ -1,30 +1,48 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { WS_BASE_URL } from "../config";
+import { API_BASE_URL, WS_BASE_URL } from "../config";
 
-const ICE_CONFIG = {
+// Fallback config (STUN only — works on same network, fails across Symmetric NATs)
+const FALLBACK_ICE_CONFIG = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
-    // Metered.ca Open Relay - Using both TURN and TURNS (TLS)
-    {
-      urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turn:openrelay.metered.ca:443?transport=tcp",
-        "turns:openrelay.metered.ca:443?transport=tcp",
-      ],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    // Adding another public relay as fallback if available (Optional)
-    // Note: Most free relays are unreliable. For production, use Twilio/Xirsys.
   ],
   iceCandidatePoolSize: 10,
 };
 
+/**
+ * Fetch dynamic TURN credentials from the backend.
+ * The backend proxies Metered.ca's API to get time-limited relay credentials.
+ * This is essential for crossing Symmetric NATs (different ISPs/networks).
+ */
+async function fetchIceConfig() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/turn/credentials`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.warning) {
+      console.warn("[TURN]", data.warning);
+    }
+
+    const config = {
+      iceServers: data.iceServers,
+      iceCandidatePoolSize: 10,
+    };
+
+    // Log what we got for debugging
+    const turnServers = data.iceServers.filter(s => {
+      const urls = Array.isArray(s.urls) ? s.urls : [s.urls];
+      return urls.some(u => u.startsWith("turn:") || u.startsWith("turns:"));
+    });
+    console.log(`[TURN] Fetched ICE config: ${data.iceServers.length} servers (${turnServers.length} TURN/TURNS)`);
+
+    return config;
+  } catch (err) {
+    console.error("[TURN] Failed to fetch credentials, using STUN-only fallback:", err.message);
+    return FALLBACK_ICE_CONFIG;
+  }
+}
 
 const CHUNK_SIZE = 64 * 1024; // 64KB chunks
 
@@ -49,6 +67,7 @@ export default function useWebRTC(token, user) {
   const pendingFiles = useRef({}); // transferId -> File
   const cancelledRef = useRef(new Set()); // track cancelled transferIds
   const receiveBuffers = useRef({}); // transferId -> { chunks, metadata }
+  const iceConfigRef = useRef(FALLBACK_ICE_CONFIG); // dynamic ICE config
 
   // onFileReceived callback ref
   const onFileReceivedRef = useRef(null);
@@ -56,6 +75,14 @@ export default function useWebRTC(token, user) {
 
   const setOnFileReceived = useCallback((fn) => { onFileReceivedRef.current = fn; }, []);
   const setOnTextReceived = useCallback((fn) => { onTextReceivedRef.current = fn; }, []);
+
+  // -- Fetch TURN credentials on mount --
+  useEffect(() => {
+    fetchIceConfig().then((config) => {
+      iceConfigRef.current = config;
+      console.log("[TURN] ICE config loaded and ready.");
+    });
+  }, []);
 
   // -- WebSocket connection --
   useEffect(() => {
@@ -153,7 +180,7 @@ export default function useWebRTC(token, user) {
     if (peersRef.current[remoteDeviceId]) {
       return peersRef.current[remoteDeviceId];
     }
-    const pc = new RTCPeerConnection(ICE_CONFIG);
+    const pc = new RTCPeerConnection(iceConfigRef.current);
     peersRef.current[remoteDeviceId] = pc;
 
     pc.onicecandidate = (e) => {
