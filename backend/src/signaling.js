@@ -27,33 +27,35 @@ function broadcastDeviceList(userId) {
 }
 
 function broadcastNearbyUsers(publicIP) {
-  // Group by IP, notify each user about others on the same network
-  const byIP = new Map();
+  // Collect all users, grouped by IP for context
+  const allUsers = new Map(); // userId -> { username, deviceId, publicIP, ws }
+  
   for (const [ws, info] of connections) {
-    if (!byIP.has(info.publicIP)) byIP.set(info.publicIP, []);
-    byIP.get(info.publicIP).push({ ws, ...info });
-  }
-
-  const group = byIP.get(publicIP) || [];
-  const usersSeen = new Set();
-  const nearbyList = [];
-  for (const entry of group) {
-    if (!usersSeen.has(entry.userId)) {
-      usersSeen.add(entry.userId);
-      nearbyList.push({
-        userId: entry.userId,
-        username: entry.username,
-        deviceId: entry.deviceId,
+    if (ws.readyState === 1) {
+      allUsers.set(info.userId, {
+        username: info.username,
+        deviceId: info.deviceId,
+        publicIP: info.publicIP,
+        ws,
       });
     }
   }
 
-  for (const entry of group) {
-    if (entry.ws.readyState === 1) {
-      // Send nearby users excluding self
-      const filtered = nearbyList.filter((u) => u.userId !== entry.userId);
-      entry.ws.send(JSON.stringify({ type: "nearby-users", users: filtered }));
+  // Broadcast to all connected users with everyone except themselves
+  for (const [userId, userData] of allUsers) {
+    const nearbyList = [];
+    for (const [otherUserId, other] of allUsers) {
+      if (otherUserId !== userId) {
+        nearbyList.push({
+          userId: otherUserId,
+          username: other.username,
+          deviceId: other.deviceId,
+          isLocal: other.publicIP === publicIP,
+        });
+      }
     }
+    
+    userData.ws.send(JSON.stringify({ type: "nearby-users", users: nearbyList }));
   }
 }
 
